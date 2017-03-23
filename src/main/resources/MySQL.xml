@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<mysql enabled="false">
+    <host>127.0.0.1</host>
+    <port>3306</port>
+    <user>root</user>
+    <pass>pass</pass>
+</mysql>
