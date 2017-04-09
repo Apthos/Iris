@@ -24,11 +24,12 @@ public class CommandManager {
     }
 
     public void registerCommand(String commandName, Command command){
-        Commands.put(commandName, command);
+        Iris.say("Registering the command: " + commandName);
+        Commands.put(commandName.toLowerCase(), command);
     }
 
     public void submitInterpretation(String CMD) {
-        //Iris.report("Submitted Command: " + CMD);
+        Iris.report("Submitted Command: " + CMD);
         if (!Commands.containsKey(CMD.split(" ")[0].toLowerCase())) {
             Iris.report("ERROR: \"" + CMD.split(" ")[0] +
                     "\" isn't a valid command!");

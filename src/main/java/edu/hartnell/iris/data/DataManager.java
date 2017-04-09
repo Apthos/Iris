@@ -6,7 +6,9 @@ import edu.hartnell.iris.Iris;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DataManager {
 
@@ -15,48 +17,48 @@ public class DataManager {
 
     public DataManager(String host, String port, String user, String pass){
         HOSTNAME = host; PORT = port; USER = user; this.PASS = pass;
+
         if (!databaseExists("Iris")) {
             createDatabase();
         }
 
         setupHikari("Iris");
-        //createOrganisationTable("CompSciClub");
 
         // One Time code //
 
-        try {
-            Connection CSCconnection = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:8889/CSC","root","root");
-            List<Contact> contacts = new ArrayList<>();
-            PreparedStatement statement1 = CSCconnection.prepareStatement("" +
-                    "SELECT * FROM CSC.Members"
-            );
-            ResultSet set = statement1.executeQuery();
-            while (set.next()){
-                contacts.add(new Contact(set.getString("Name"),set.getString("Nick"),
-                        "member", set.getString("Email"), null));
-                Iris.warn(set.getString("Name") + " contact has been added!");
-            }
-            CSCconnection.close();
-            statement1.close();
-            set.close();
-
-            Connection connection = getConnection();
-            for (Contact contact : contacts) {
-                PreparedStatement statement2 = connection.prepareStatement("" +
-                        "INSERT INTO Iris.CompSciClub VALUES (?, ?, ?, ?, NULL);"
-                );
-                statement2.setString(1, contact.getName());
-                statement2.setString(2, contact.getNick());
-                statement2.setString(3, contact.getPosition());
-                statement2.setString(4, contact.getEmail());
-                statement2.execute();
-                statement2.close();
-            }
-            connection.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Connection CSCconnection = DriverManager.getConnection(
+//                    "jdbc:mysql://localhost:8889/CSC","root","root");
+//            List<Contact> contacts = new ArrayList<>();
+//            PreparedStatement statement1 = CSCconnection.prepareStatement("" +
+//                    "SELECT * FROM CSC.Members"
+//            );
+//            ResultSet set = statement1.executeQuery();
+//            while (set.next()){
+//                contacts.add(new Contact(set.getString("Name"),set.getString("Nick"),
+//                        "member", set.getString("Email"), null));
+//                Iris.warn(set.getString("Name") + " contact has been added!");
+//            }
+//            CSCconnection.close();
+//            statement1.close();
+//            set.close();
+//
+//            Connection connection = getConnection();
+//            for (Contact contact : contacts) {
+//                PreparedStatement statement2 = connection.prepareStatement("" +
+//                        "INSERT INTO Iris.CompSciClub VALUES (?, ?, ?, ?, NULL);"
+//                );
+//                statement2.setString(1, contact.getName());
+//                statement2.setString(2, contact.getNick());
+//                statement2.setString(3, contact.getPosition());
+//                statement2.setString(4, contact.getEmail());
+//                statement2.execute();
+//                statement2.close();
+//            }
+//            connection.close();
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -163,12 +165,29 @@ public class DataManager {
         return null;
     }
 
-    public void getOrginizations(String org){
+    public Set<Contact> getOrginizationContacts(String org){
+        Set<Contact> contacts = new HashSet<>();
         try {
             Connection connection = hikari.getConnection();
+
+            Iris.warn("MySQL query: " + "" +
+                    "SELECT * FROM Iris." + org + ";");
+
+            PreparedStatement statement = connection.prepareStatement("" +
+                    "SELECT * FROM Iris." + org + ";");
+            ResultSet results = statement.executeQuery();
+
+            while (results.next()){
+                Contact contact = new Contact(results.getString("name"),
+                        results.getString("nick"), results.getString("position"),
+                        results.getString("email"), results.getString("phone"));
+                Iris.say(results.getString("name")  + " contact has been retrieved");
+                contacts.add(contact);
+            }
         } catch (Exception e){
             e.printStackTrace();
         }
+        return contacts;
     }
 
     public void close(){

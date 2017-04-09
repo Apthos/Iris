@@ -25,10 +25,9 @@ public class CommandKeys extends KeyAdapter {
 
     private void submitCommand(){
         console.getCommandPanel().setText("");
-        //Iris.report("Submitting command: " + currentCommand);
+        Iris.report("Submitting command: " + currentCommand);
         commandManager.submitInterpretation(currentCommand);
         prevCommands.add(currentCommand);
-        currentCommand = "";
     }
 
     @Override
@@ -37,6 +36,8 @@ public class CommandKeys extends KeyAdapter {
             if (console.getCommandPanel().getText().equals(""))
                 return;
             submitCommand();
+            currentCommand = "";
+            Iris.say("Current Command should be cleared!");
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
             if (!console.getCommandPanel().getText().equals(""))
                 return;
@@ -50,7 +51,8 @@ public class CommandKeys extends KeyAdapter {
             }
             currentCommand = currentCommand.substring(0, currentCommand.length()-1);
         } else if (Character.isAlphabetic(e.getKeyChar()) ||
-                Character.isJavaLetterOrDigit(e.getKeyChar())) {
+                Character.isJavaLetterOrDigit(e.getKeyChar()) ||
+                e.getKeyCode() == KeyEvent.VK_SPACE) {
             currentCommand = currentCommand + e.getKeyChar();
             //Iris.say("Appending command: " + currentCommand);
         }

@@ -25,9 +25,9 @@ public class Contact {
     }
 
     public String getNick(){
-        if (NICK != null)
-            return NICK;
-        return NAME;
+        if (NICK == null || NICK.equals(""))
+            return NAME.split(" ")[0].toLowerCase();
+        return NICK;
     }
 
     public String getPosition(){

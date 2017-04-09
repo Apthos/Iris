@@ -5,16 +5,21 @@ import edu.hartnell.iris.plugin.Plugin;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.Multipart;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class iMail {
 
     public enum RecipientType {
         TO, CC, BCC;
-
 
         protected Message.RecipientType toMimeRecipientType(){
             switch (this){
@@ -34,6 +39,7 @@ public class iMail {
 
     private MimeMessage email;
     private HashMap<String, Message.RecipientType> recipients = new HashMap<>();
+    private List<File> files = new ArrayList<>();
 
     public iMail(Plugin plugin){
         this.plugin = plugin;
@@ -51,7 +57,16 @@ public class iMail {
         recipients.put(Address, type.toMimeRecipientType());
     }
 
+    public void addFile(File file){
+        files.add(file);
+    }
+
     public void send(){
+        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+        for (StackTraceElement stackTraceElement : stackTraceElements){
+            Iris.report(stackTraceElement.getMethodName() + " : " +
+            stackTraceElement.getLineNumber());
+        }
         new Thread(() -> {
             try {
                 if (! Iris.getEmailManager().connected) {
@@ -65,15 +80,31 @@ public class iMail {
                     return;
                 }
 
+                Multipart multipart = new MimeMultipart();
+
                 email = Iris.getEmailManager().getMimeMessage();
                 email.setFrom(new InternetAddress(Iris.getEmailManager().getUser()));
-                email.setText(text);
+                MimeBodyPart messageBodyPart = new MimeBodyPart();
+                messageBodyPart.setText(text);
+                multipart.addBodyPart(messageBodyPart);
                 email.setSubject(subject);
 
                 for (String recipient : recipients.keySet()) {
                     email.addRecipient(recipients.get(recipient),
                             InternetAddress.parse(recipient)[0]);
                 }
+
+                List<MimeBodyPart> attachments = new ArrayList<>();
+                for (File file : files){
+                    MimeBodyPart attachPart = new MimeBodyPart();
+                    attachPart.attachFile(file);
+                    attachments.add(attachPart);
+                }
+
+                for (MimeBodyPart part : attachments){
+                    multipart.addBodyPart(part);
+                }
+                email.setContent(multipart);
 
                 Transport.send(email);
             } catch (Exception e) {
