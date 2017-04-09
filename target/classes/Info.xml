@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<plugin>
+    <info>
+        <name>Iris</name>
+        <class>edu.hartnell.iris.Iris</class>
+        <author>Kevin Guzman</author>
+        <group>Standard</group>
+        <version>1.0</version>
+    </info>
+    <configurations enabled="true">
+        <start_delay>0</start_delay>
+    </configurations>
+</plugin>
