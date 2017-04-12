@@ -3,17 +3,19 @@ package edu.hartnell.iris;
 import edu.hartnell.iris.commands.CommandManager;
 import edu.hartnell.iris.data.DataManager;
 import edu.hartnell.iris.email.EmailManager;
+import edu.hartnell.iris.event.ListenerTest;
 import edu.hartnell.iris.gui.Console;
 import edu.hartnell.iris.plugin.PluginManager;
 import edu.hartnell.iris.text.TextManager;
 import edu.hartnell.iris.utility.ResourceUtils;
 import org.jdom.Document;
-import org.jdom.Text;
 import org.jdom.input.SAXBuilder;
 
 import java.io.File;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class Iris {
 
@@ -28,6 +30,8 @@ public class Iris {
         System.out.println("Initializing server!");
         setup();
         say("Done initializing server!");
+
+        getPluginManager().registerListener(new ListenerTest());
     }
 
     private static void setup() {

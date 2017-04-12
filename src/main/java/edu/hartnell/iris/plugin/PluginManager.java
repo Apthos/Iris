@@ -1,8 +1,15 @@
 package edu.hartnell.iris.plugin;
 
 import edu.hartnell.iris.Iris;
+import edu.hartnell.iris.event.IrisEvent;
+import edu.hartnell.iris.event.IrisListener;
+import edu.hartnell.iris.event.events.EmailRecieved;
 
-import java.io.*;
+import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 
@@ -50,6 +57,47 @@ public class PluginManager extends ClassLoader{
             }
         }
         return null;
+    }
+
+    public void registerListener(IrisListener e) {
+        Method[] methods = e.getClass().getMethods();
+        for (Method method : methods) {
+            boolean anEvent = false;
+            String Parameters = "";
+            String Annotations = "";
+
+            method.setAccessible(true);
+
+            if (method.getParameters().length == 1 &&
+                    method.getParameters()[0].getType().equals(EmailRecieved.class) &&
+                    method.isAnnotationPresent(IrisEvent.class)) {
+                anEvent = true;
+            } else {
+                for (Parameter para : method.getParameters()) {
+                    Parameters += para.getType().getSimpleName() + " ";
+                }
+                for (Annotation annotation : method.getAnnotations()) {
+                    Annotations += annotation.annotationType().getSimpleName();
+                }
+                Parameters = "pLength: " + method.getParameters().length + " Parameters: " +
+                        Parameters + " Annotations: " + Annotations;
+            }
+
+            if (anEvent) {
+                Iris.report("Method/ Name:" + method.getName() + " [ " + Parameters + " ] ");
+                method.setAccessible(true);
+                try {
+                    method.invoke(e, new EmailRecieved());
+                } catch (IllegalAccessException e1) {
+                    e1.printStackTrace();
+                } catch (InvocationTargetException e1) {
+                    e1.printStackTrace();
+                }
+            } else {
+                Iris.say("Method/ Name:" + method.getName() + " [ " + Parameters + " ] ");
+            }
+
+        }
     }
 
 }

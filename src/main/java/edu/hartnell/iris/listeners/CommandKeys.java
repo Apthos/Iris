@@ -1,11 +1,10 @@
-package edu.hartnell.iris.commands.listeners;
+package edu.hartnell.iris.listeners;
 
 import edu.hartnell.iris.Iris;
 import edu.hartnell.iris.commands.CommandManager;
 import edu.hartnell.iris.gui.Console;
 
 import java.awt.event.KeyAdapter;
-
 import java.awt.event.KeyEvent;
 import java.util.LinkedList;
 

@@ -1,7 +1,7 @@
 package edu.hartnell.iris.gui;
 
 import edu.hartnell.iris.commands.CommandManager;
-import edu.hartnell.iris.commands.listeners.CommandKeys;
+import edu.hartnell.iris.listeners.CommandKeys;
 import edu.hartnell.iris.time.TimeManager;
 
 import javax.swing.*;

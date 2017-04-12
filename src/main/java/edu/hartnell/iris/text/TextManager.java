@@ -1,14 +1,8 @@
 package edu.hartnell.iris.text;
 
 import com.twilio.Twilio;
-import com.twilio.base.ResourceSet;
 import com.twilio.http.TwilioRestClient;
-import com.twilio.rest.api.v2010.Account;
 import com.twilio.rest.api.v2010.account.Message;
-import com.twilio.rest.trunking.v1.trunk.PhoneNumber;
-import edu.hartnell.iris.Iris;
-
-import java.util.HashMap;
 
 public class TextManager {
 

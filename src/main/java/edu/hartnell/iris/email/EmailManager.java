@@ -1,14 +1,12 @@
 package edu.hartnell.iris.email;
 
 import edu.hartnell.iris.Iris;
-import edu.hartnell.iris.utility.ResourceUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 
-import javax.mail.*;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Store;
 import javax.mail.internet.MimeMessage;
-import java.io.*;
 import java.util.LinkedList;
 import java.util.Properties;
 
