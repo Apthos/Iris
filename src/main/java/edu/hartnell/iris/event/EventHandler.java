@@ -7,10 +7,11 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface IrisEvent {
+public @interface EventHandler {
     Priority priority() default Priority.normal;
 
     enum Priority {
         high, normal, low
     }
+
 }

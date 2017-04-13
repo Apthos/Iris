@@ -1,25 +1,23 @@
 package edu.hartnell.iris.plugin;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import edu.hartnell.iris.Iris;
-import edu.hartnell.iris.event.IrisEvent;
-import edu.hartnell.iris.event.IrisListener;
-import edu.hartnell.iris.event.events.EmailRecieved;
+import edu.hartnell.iris.event.EventHandler;
+import edu.hartnell.iris.event.iListener;
 
 import java.io.File;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 
 import static java.lang.Thread.sleep;
 
-public class PluginManager extends ClassLoader{
+public class PluginManager extends ClassLoader {
 
     private LinkedHashSet<Plugin> plugins = new LinkedHashSet<>();
 
-    public PluginManager(){
+    public PluginManager() {
         Iris.say("Starting Plugin Manager!");
         File rdir;
         try {
@@ -28,13 +26,14 @@ public class PluginManager extends ClassLoader{
         } catch (URISyntaxException e) { e.printStackTrace(); return; }
 
         File pdir = new File(rdir + "/Plugins");
-        if (!pdir.exists()){
+        if (! pdir.exists()) {
             Iris.warn("Warning: Could not find plugin folder, Generating new one!");
             pdir.mkdir();
         }
 
         new Thread(() -> {
-            try { sleep(1000);
+            try {
+                sleep(1000);
             } catch (InterruptedException e) { e.printStackTrace(); }
             for (File f : pdir.listFiles()) {
                 if (f.getName().endsWith(".jar")) {
@@ -50,52 +49,31 @@ public class PluginManager extends ClassLoader{
         }).start();
     }
 
-    public Plugin getPluginFromInstance(IrisFrame frame){
-        for (Plugin plugin : plugins){
-            if (plugin.getInstance().equals(frame)){
+    public Plugin getPluginFromInstance(IrisFrame frame) {
+        for (Plugin plugin : plugins) {
+            if (plugin.getInstance().equals(frame)) {
                 return plugin;
             }
         }
         return null;
     }
 
-    public void registerListener(IrisListener e) {
-        Method[] methods = e.getClass().getMethods();
+    private Table<EventHandler, iListener, Method> listeners = HashBasedTable.create();
+
+    public void registerListener(iListener listen) {
+        Method[] methods = listen.getClass().getMethods();
         for (Method method : methods) {
-            boolean anEvent = false;
-            String Parameters = "";
-            String Annotations = "";
 
             method.setAccessible(true);
 
-            if (method.getParameters().length == 1 &&
-                    method.getParameters()[0].getType().equals(EmailRecieved.class) &&
-                    method.isAnnotationPresent(IrisEvent.class)) {
-                anEvent = true;
-            } else {
-                for (Parameter para : method.getParameters()) {
-                    Parameters += para.getType().getSimpleName() + " ";
-                }
-                for (Annotation annotation : method.getAnnotations()) {
-                    Annotations += annotation.annotationType().getSimpleName();
-                }
-                Parameters = "pLength: " + method.getParameters().length + " Parameters: " +
-                        Parameters + " Annotations: " + Annotations;
-            }
+//            if (! (method.getParameters().length == 1 &&
+//                    method.getParameters()[0].getType().get &&
+//                    method.isAnnotationPresent(EventHandler.class))) continue;
 
-            if (anEvent) {
-                Iris.report("Method/ Name:" + method.getName() + " [ " + Parameters + " ] ");
-                method.setAccessible(true);
-                try {
-                    method.invoke(e, new EmailRecieved());
-                } catch (IllegalAccessException e1) {
-                    e1.printStackTrace();
-                } catch (InvocationTargetException e1) {
-                    e1.printStackTrace();
-                }
-            } else {
-                Iris.say("Method/ Name:" + method.getName() + " [ " + Parameters + " ] ");
-            }
+//            listeners.put(iListener.Listener.byValue((Class<? extends EventHandler>)
+//                    method.getParameters()[0].getType()), listen, method);
+
+
 
         }
     }

@@ -3,7 +3,7 @@ package edu.hartnell.iris;
 import edu.hartnell.iris.commands.CommandManager;
 import edu.hartnell.iris.data.DataManager;
 import edu.hartnell.iris.email.EmailManager;
-import edu.hartnell.iris.event.ListenerTest;
+import edu.hartnell.iris.test.ListenerTest;
 import edu.hartnell.iris.gui.Console;
 import edu.hartnell.iris.plugin.PluginManager;
 import edu.hartnell.iris.text.TextManager;
