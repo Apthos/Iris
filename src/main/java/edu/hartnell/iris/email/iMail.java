@@ -1,6 +1,7 @@
 package edu.hartnell.iris.email;
 
 import edu.hartnell.iris.Iris;
+import edu.hartnell.iris.plugin.IrisFrame;
 import edu.hartnell.iris.plugin.Plugin;
 
 import javax.mail.Message;
@@ -40,8 +41,8 @@ public class iMail {
     private HashMap<String, Message.RecipientType> recipients = new HashMap<>();
     private List<File> files = new ArrayList<>();
 
-    public iMail(Plugin plugin){
-        this.plugin = plugin;
+    public iMail(IrisFrame frame) {
+        plugin = Iris.getPluginManager().getPluginFromInstance(frame);
     }
 
     public void setText(String text) {

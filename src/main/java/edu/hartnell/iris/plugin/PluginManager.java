@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
+import static java.lang.Thread.interrupted;
 import static java.lang.Thread.sleep;
 
 public class PluginManager extends ClassLoader {
@@ -60,6 +61,10 @@ public class PluginManager extends ClassLoader {
             }
         }
         return null;
+    }
+
+    public boolean isMainClass(Class C) {
+        return C.isAssignableFrom(IrisFrame.class);
     }
 
     private Table<iEvent.Events, iListener, Method> listeners = HashBasedTable.create();
