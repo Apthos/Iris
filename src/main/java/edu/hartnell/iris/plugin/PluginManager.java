@@ -4,12 +4,16 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import edu.hartnell.iris.Iris;
 import edu.hartnell.iris.event.EventHandler;
+import edu.hartnell.iris.event.iEvent;
 import edu.hartnell.iris.event.iListener;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 import static java.lang.Thread.sleep;
 
@@ -33,7 +37,7 @@ public class PluginManager extends ClassLoader {
 
         new Thread(() -> {
             try {
-                sleep(1000);
+                sleep(100);
             } catch (InterruptedException e) { e.printStackTrace(); }
             for (File f : pdir.listFiles()) {
                 if (f.getName().endsWith(".jar")) {
@@ -58,24 +62,42 @@ public class PluginManager extends ClassLoader {
         return null;
     }
 
-    private Table<EventHandler, iListener, Method> listeners = HashBasedTable.create();
+    private Table<iEvent.Events, iListener, Method> listeners = HashBasedTable.create();
 
     public void registerListener(iListener listen) {
         Method[] methods = listen.getClass().getMethods();
         for (Method method : methods) {
-
             method.setAccessible(true);
 
-//            if (! (method.getParameters().length == 1 &&
-//                    method.getParameters()[0].getType().get &&
-//                    method.isAnnotationPresent(EventHandler.class))) continue;
+            if (! (method.getParameters().length == 1 &&
+                    iEvent.Registry.containsClass((Class<? extends iEvent>)
+                            method.getParameters()[0].getType()) &&
+                    method.isAnnotationPresent(EventHandler.class))) continue;
 
-//            listeners.put(iListener.Listener.byValue((Class<? extends EventHandler>)
-//                    method.getParameters()[0].getType()), listen, method);
-
-
-
+            listeners.put(iEvent.Events.getEventEnum((Class<? extends iEvent>)
+                    method.getParameters()[0].getType()), listen, method);
         }
     }
+
+    public void invoke(iEvent.Events event, iEvent passIn) {
+        if (! iEvent.Events.getEventEnum(passIn.getClass()).equals(event)) {
+            Iris.report("could not invoke!");
+            // todo: Add stack trace error!
+            return;
+        }
+
+        Map<iListener, Method> map = listeners.row(event);
+
+        for (iListener key : map.keySet()) {
+            Method method = map.get(key);
+            try {
+                method.invoke(key, passIn);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
 
 }

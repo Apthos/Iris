@@ -3,6 +3,8 @@ package edu.hartnell.iris;
 import edu.hartnell.iris.commands.CommandManager;
 import edu.hartnell.iris.data.DataManager;
 import edu.hartnell.iris.email.EmailManager;
+import edu.hartnell.iris.event.events.EmailReceive;
+import edu.hartnell.iris.event.iEvent;
 import edu.hartnell.iris.test.ListenerTest;
 import edu.hartnell.iris.gui.Console;
 import edu.hartnell.iris.plugin.PluginManager;
@@ -32,6 +34,7 @@ public class Iris {
         say("Done initializing server!");
 
         getPluginManager().registerListener(new ListenerTest());
+        getPluginManager().invoke(iEvent.Events.EmailReceive, new EmailReceive());
     }
 
     private static void setup() {
