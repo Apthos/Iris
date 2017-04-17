@@ -12,7 +12,7 @@ mail.addRecipient("Kevin@SomeEmail.net", RecipeintType.TO);
 mail.send();
 ```
 
-*Send a Text*
+*Send a Text Message*
 ```java
 iText text = new iText(this);
 text.setText("Hey");
