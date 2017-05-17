@@ -1,4 +1,4 @@
-package edu.hartnell.iris.email;
+package edu.hartnell.iris.communication.email;
 
 import edu.hartnell.iris.Iris;
 

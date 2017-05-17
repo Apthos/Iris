@@ -11,6 +11,6 @@ public class Memory extends Command {
         Runtime runtime = Runtime.getRuntime();
         long UsedMem = runtime.totalMemory() - runtime.freeMemory();
         UsedMem =  UsedMem/1024;
-        Iris.say("Memory Used: " + String.valueOf(UsedMem));
+        Iris.respond("Memory Used: " + String.valueOf(UsedMem));
     }
 }

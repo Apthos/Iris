@@ -45,7 +45,7 @@ public class PluginManager extends ClassLoader {
                     try {
                         Plugin plugin = new Plugin(f);
                         if (plugin.isInitialized())
-                            Iris.say("Plugin");
+                            Iris.say("Initialized  " + f.getName());
                         plugins.add(plugin);
                         plugin.enable();
                     } catch (Exception e) { e.printStackTrace(); }

@@ -1,23 +1,31 @@
 package edu.hartnell.iris;
 
 import edu.hartnell.iris.commands.CommandManager;
+import edu.hartnell.iris.communication.socket.SocketManager;
 import edu.hartnell.iris.data.DataManager;
-import edu.hartnell.iris.email.EmailManager;
+import edu.hartnell.iris.communication.email.EmailManager;
 import edu.hartnell.iris.event.events.EmailReceive;
 import edu.hartnell.iris.event.iEvent;
 import edu.hartnell.iris.test.ListenerTest;
 import edu.hartnell.iris.gui.Console;
 import edu.hartnell.iris.plugin.PluginManager;
-import edu.hartnell.iris.text.TextManager;
+import edu.hartnell.iris.communication.text.TextManager;
 import edu.hartnell.iris.utility.ResourceUtils;
 import org.jdom.Document;
+import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
+import javax.swing.*;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.ScrollBarUI;
+import java.awt.*;
 import java.io.File;
+import java.lang.reflect.Parameter;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 public class Iris {
 
@@ -27,11 +35,10 @@ public class Iris {
     private static EmailManager emailManager = null;
     private static TextManager textManager = null;
     private static DataManager dataManager = null;
+    private static SocketManager socketManager = null;
 
     public static void main(String... args) {
-        System.out.println("Initializing server!");
         setup();
-        say("Done initializing server!");
 
         getPluginManager().registerListener(new ListenerTest());
         getPluginManager().invoke(iEvent.Events.EmailReceive, new EmailReceive());
@@ -39,37 +46,62 @@ public class Iris {
 
     private static void setup() {
         console = new Console();
-        HashSet<ManagerSettings> credentials = collectCredentials();
+        Settings conf = collectCredentials();
         commandManager = new CommandManager();
         console.initializeEvents(console, commandManager);
-        ManagerSettings ems = ManagerSettings.getFromCollection(credentials, "email");
-        if (ems.isEnabled()) {
-            Iris.warn("Iris is running with emails enabled!");
-            emailManager = new EmailManager(ems.get("USER"), ems.get("PASS"));
-        } else {
-            Iris.warn("Iris is running with emails disabled!");
+        try {
+            conf.select("email");
+            if (conf.getBoolean("enabled")) {
+                Iris.warn("Iris is running with emails enabled!");
+                emailManager = new EmailManager
+                        (conf.getString("USER"), conf.getString("PASS"));
+            } else {
+                Iris.warn("Iris is running with emails disabled!");
+            }
+        } catch (Exception e) {
+            Iris.report("Email Module could not be initialized");
         }
-        ManagerSettings tms = ManagerSettings.getFromCollection(credentials, "twil");
-        if (tms.isEnabled()) {
+        try {
+            conf.select("twil");
+            if (conf.getBoolean("enabled")) {
             Iris.warn("Iris is running with texts enabled!");
-            textManager = new TextManager(tms.get("ACCOUNT_SID"),
-                    tms.get("MSG_SER_SID"), tms.get("AUTH_TOKEN"));
+                textManager = new TextManager(conf.getString("ACCOUNT_SID"),
+                        conf.getString("MSG_SER_SID"), conf.getString("AUTH_TOKEN"));
         } else {
             Iris.warn("Iris is running with texts disabled!");
         }
-        ManagerSettings mysqls = ManagerSettings.getFromCollection(credentials, "mysql");
-        if (mysqls.isEnabled()) {
-            Iris.warn("Iris is running with databases enabled!");
-            dataManager = new DataManager(mysqls.get("HOST"), mysqls.get("PORT"),
-                    mysqls.get("USER"), mysqls.get("PASS"));
-        } else {
-            Iris.warn("Iris is running with databases disabled!");
+        } catch (Exception e) {
+            Iris.report("Text Module could not be initialized");
         }
+        try {
+            conf.select("mysql");
+            if (conf.getBoolean("enabled")) {
+                Iris.warn("Iris is running with databases enabled!");
+                dataManager = new DataManager(conf.getString("HOST"), conf.getString("PORT"),
+                        conf.getString("USER"), conf.getString("PASS"));
+            } else {
+                Iris.warn("Iris is running with databases disabled!");
+            }
+        } catch (Exception e) {
+            Iris.report("Database Module could not be initialized");
+        }
+
+        try {
+            socketManager = new SocketManager(conf.select("socket").getInt("port"),
+                    conf.getInt("timeout"), conf.getInt("concurrent"));
+        } catch (Exception e) {
+            Iris.report("Socket Module could not be initialized");
+        }
+
         pluginManager = new PluginManager(); //has to be last
     }
 
     public static void say(String Message) {
         console.say(Message);
+    }
+
+    public static void respond(String Message) {
+        console.respond(Message);
     }
 
     public static void warn(String Warning) {
@@ -113,6 +145,13 @@ public class Iris {
         return textManager;
     }
 
+    public static SocketManager getSocketManager() {
+        if (socketManager == null) {
+            Iris.report("A null version of Socket Manager has been retrieved!");
+        }
+        return socketManager;
+    }
+
     public static File getRuntimeLocation() throws URISyntaxException {
         File file = new File(Iris.class.getProtectionDomain().getCodeSource()
                 .getLocation().toURI().getPath());
@@ -125,53 +164,61 @@ public class Iris {
         return file;
     }
 
-    private static class ManagerSettings {
+    private static class Settings {
 
-        public static ManagerSettings getFromCollection(
-                Collection<ManagerSettings> collection, String name) {
-            for (ManagerSettings MS : collection) {
-                if (MS.getName().equalsIgnoreCase(name)) {
-                    return MS;
-                }
+        private HashMap<String, HashMap<String, Object>> settings = new HashMap<>();
+        private String section = null;
+
+        public void add(String setting, Object value) {
+            if (section == null) {
+                Iris.report("Could not add because current section not selected!");
+                return;
             }
-            return null;
+            settings.get(section).put(setting, value);
         }
 
-        private final String NAME;
-        private final boolean ENABLED;
-        private HashMap<String, String> settings = new HashMap<>();
-
-        public ManagerSettings(String managerName, boolean enabled) {
-            NAME = managerName;
-            ENABLED = enabled;
+        public Settings select(String index) {
+            if (! settings.keySet().contains(index.toLowerCase())) {
+                Iris.report("Could not select this section because it doesn't exist!");
+                return this;
+            }
+            section = index.toLowerCase();
+            return this;
         }
 
-        public void add(String setting, String value) {
-            settings.put(setting, value);
+        public Settings createSection(String title) {
+            settings.put(title, new HashMap<>());
+            section = title.toLowerCase();
+            return this;
         }
 
-        public String get(String setting) {
-            return settings.get(setting);
+        public String getString(String setting) {
+            return (String) settings.get(section).get(setting);
         }
 
-        public String getName() {
-            return NAME;
+        public int getInt(String setting) {
+            return (int) settings.get(section).get(setting);
         }
 
-        public boolean isEnabled() {
-            return ENABLED;
+        public boolean getBoolean(String setting) {
+            return (boolean) settings.get(section).get(setting);
+        }
+
+        public Object getObject(String setting) {
+            return settings.get(section).get(setting);
         }
 
 
     }
 
-    private static HashSet<ManagerSettings> collectCredentials() {
-        HashSet<ManagerSettings> credentials = new HashSet<>();
+    private static Settings collectCredentials() {
+        Settings settings = new Settings();
         try {
             File cDir = new File(Iris.getRuntimeLocation() + "/Credentials");
             File EMailFile = new File(cDir + "/EMail.xml");
             File MySQLFile = new File(cDir + "/MySQL.xml");
             File TwilFile = new File(cDir + "/Twil.xml");
+            File configFile = new File(cDir + "/Config.xml");
 
             SAXBuilder builder = new SAXBuilder();
 
@@ -185,48 +232,61 @@ public class Iris {
                 Iris.warn("Warning: Could not find EMail file, Generating new one!");
                 ResourceUtils.ExportResource("/EMail.xml", "Credentials");
             }
-            Document EMail = builder.build(EMailFile);
-            ManagerSettings ems = new ManagerSettings("email", Boolean.parseBoolean(
-                    EMail.getRootElement().getAttributeValue("enabled")));
-            ems.add("USER", EMail.getRootElement().getChild("email")
-                    .getChildText("address"));
-            ems.add("PASS", EMail.getRootElement().getChild("email")
-                    .getChildText("password"));
-            ems.add("ENABLED", (EMail.getRootElement().getAttributeValue("enabled")
-                    .equalsIgnoreCase("true")) ? "true" : "false");
-            credentials.add(ems);
 
+            Document EMail = builder.build(EMailFile);
+            settings.createSection("email");
+            settings.add("enabled", (EMail.getRootElement().getAttributeValue("enabled")
+                    .equalsIgnoreCase("true")));
+            settings.add("USER", EMail.getRootElement().getChild("email")
+                    .getChildText("address"));
+            settings.add("PASS", EMail.getRootElement().getChild("email")
+                    .getChildText("password"));
 
             if (! MySQLFile.exists()) {
                 Iris.warn("Warning: Could not find MySQL file, Generating new one!");
                 ResourceUtils.ExportResource("/MySQL.xml", "Credentials");
             }
             Document mysql = builder.build(MySQLFile);
-            ManagerSettings mysqls = new ManagerSettings("mysql", Boolean.parseBoolean(
-                    mysql.getRootElement().getAttributeValue("enabled")));
-            mysqls.add("HOST", mysql.getRootElement().getChildText("host"));
-            mysqls.add("PORT", mysql.getRootElement().getChildText("port"));
-            mysqls.add("USER", mysql.getRootElement().getChildText("user"));
-            mysqls.add("PASS", mysql.getRootElement().getChildText("pass"));
-            credentials.add(mysqls);
+            settings.createSection("mysql");
+            settings.add("enabled", (mysql.getRootElement().getAttributeValue("enabled")
+                    .equalsIgnoreCase("true")));
+            settings.add("HOST", mysql.getRootElement().getChildText("host"));
+            settings.add("PORT", mysql.getRootElement().getChildText("port"));
+            settings.add("USER", mysql.getRootElement().getChildText("user"));
+            settings.add("PASS", mysql.getRootElement().getChildText("pass"));
 
             if (! TwilFile.exists()) {
                 Iris.warn("Warning: Could not find Twilio login file, Generating new one!");
                 ResourceUtils.ExportResource("/Twil.xml", "Credentials");
             }
+
             Document twil = builder.build(TwilFile);
-            ManagerSettings twils = new ManagerSettings("twil", Boolean.parseBoolean(
-                    twil.getRootElement().getAttributeValue("enabled")));
-            twils.add("ACCOUNT_SID", twil.getRootElement().getChildText("account_sid"));
-            twils.add("MSG_SER_SID", twil.getRootElement().getChildText(
+            settings.createSection("twil");
+            settings.add("enabled", (twil.getRootElement().getAttributeValue("enabled")
+                    .equalsIgnoreCase("true")));
+            settings.add("ACCOUNT_SID", twil.getRootElement().getChildText("account_sid"));
+            settings.add("MSG_SER_SID", twil.getRootElement().getChildText(
                     "messaging_service_sid"));
-            twils.add("AUTH_TOKEN", twil.getRootElement().getChildText("auth_token"));
-            credentials.add(twils);
+            settings.add("AUTH_TOKEN", twil.getRootElement().getChildText("auth_token"));
+
+            if (! configFile.exists()) {
+                Iris.warn("Warning: Could not find Config file, Generating one now!");
+                ResourceUtils.ExportResource("/Config.xml", "Credentials");
+            }
+
+            Document socketDoc = builder.build(configFile);
+            settings.createSection("socket");
+            Element ElSock = socketDoc.getRootElement().getChild("settings")
+                    .getChild("socket");
+            settings.add("enabled", (ElSock.getAttributeValue("enabled")
+                    .equalsIgnoreCase("true")));
+            settings.add("port", Integer.parseInt(ElSock.getChildText("port")));
+            settings.add("timeout", Integer.parseInt(ElSock.getChildText("timeout")));
+            settings.add("concurrent", Integer.parseInt(ElSock.getChildText("concurrent")));
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return credentials;
+        return settings;
     }
-
 }

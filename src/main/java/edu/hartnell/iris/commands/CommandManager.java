@@ -29,7 +29,6 @@ public class CommandManager {
     }
 
     public void submitInterpretation(String CMD) {
-        Iris.report("Submitted Command: " + CMD);
         if (!Commands.containsKey(CMD.split(" ")[0].toLowerCase())) {
             Iris.report("ERROR: \"" + CMD.split(" ")[0] +
                     "\" isn't a valid command!");

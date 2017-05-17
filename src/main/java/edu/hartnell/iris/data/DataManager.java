@@ -116,7 +116,6 @@ public class DataManager {
             statement.close();
             connection.close();
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -131,7 +130,6 @@ public class DataManager {
             con.close();
             statement.close();
         } catch (Exception e){
-            e.printStackTrace();
         }
     }
 
@@ -150,7 +148,6 @@ public class DataManager {
             dropDB.close();
             connection.close();
         } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -158,7 +155,6 @@ public class DataManager {
         try {
             return hikari.getConnection();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
         return null;
     }
@@ -183,7 +179,6 @@ public class DataManager {
                 contacts.add(contact);
             }
         } catch (Exception e){
-            e.printStackTrace();
         }
         return contacts;
     }

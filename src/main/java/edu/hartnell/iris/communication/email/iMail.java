@@ -1,4 +1,4 @@
-package edu.hartnell.iris.email;
+package edu.hartnell.iris.communication.email;
 
 import edu.hartnell.iris.Iris;
 import edu.hartnell.iris.plugin.IrisFrame;
@@ -35,7 +35,7 @@ public class iMail {
     }
 
     private Plugin plugin;
-    private String text = "", subject = "";
+    private String text = "", subject = "", displayName = "";
 
     private MimeMessage email;
     private HashMap<String, Message.RecipientType> recipients = new HashMap<>();
@@ -57,16 +57,20 @@ public class iMail {
         recipients.put(Address, type.toMimeRecipientType());
     }
 
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     public void addFile(File file){
         files.add(file);
     }
 
     public void send(){
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-        for (StackTraceElement stackTraceElement : stackTraceElements){
-            Iris.report(stackTraceElement.getMethodName() + " : " +
-            stackTraceElement.getLineNumber());
-        }
+//        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+//        for (StackTraceElement stackTraceElement : stackTraceElements){
+//            Iris.report(stackTraceElement.getMethodName() + " : " +
+//            stackTraceElement.getLineNumber());
+//        }
         new Thread(() -> {
             try {
                 if (! Iris.getEmailManager().connected) {
@@ -84,6 +88,10 @@ public class iMail {
 
                 email = Iris.getEmailManager().getMimeMessage();
                 email.setFrom(new InternetAddress(Iris.getEmailManager().getUser()));
+                if (! displayName.equals("")) {
+                    email.setFrom(new InternetAddress(Iris.getEmailManager().getUser(),
+                            displayName));
+                }
                 MimeBodyPart messageBodyPart = new MimeBodyPart();
                 messageBodyPart.setText(text);
                 multipart.addBodyPart(messageBodyPart);

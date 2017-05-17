@@ -14,46 +14,33 @@ public class CommandKeys extends KeyAdapter {
     private CommandManager commandManager;
 
     private LinkedList<String> prevCommands = new LinkedList<>();
-    private String currentCommand = "";
 
     public CommandKeys(Console console, CommandManager commandManager){
-        Iris.report("Program Created new instance of keylogger now!");
         this.console = console;
         this.commandManager = commandManager;
     }
 
-    private void submitCommand(){
+    private void submitCommand(String cmd) {
         console.getCommandPanel().setText("");
-        Iris.report("Submitting command: " + currentCommand);
-        commandManager.submitInterpretation(currentCommand);
-        prevCommands.add(currentCommand);
+        commandManager.submitInterpretation(cmd);
+        prevCommands.add(cmd);
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+
             if (console.getCommandPanel().getText().equals(""))
                 return;
-            submitCommand();
-            currentCommand = "";
-            Iris.say("Current Command should be cleared!");
+
+            submitCommand(Iris.getConsole().getCommandPanel().getText());
+
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
+
             if (!console.getCommandPanel().getText().equals(""))
                 return;
             console.getCommandPanel().setText(prevCommands.getLast());
-        } else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
-            if (currentCommand.equals(""))
-                return;
-            if (currentCommand.length() == 1){
-                currentCommand = "";
-                return;
-            }
-            currentCommand = currentCommand.substring(0, currentCommand.length()-1);
-        } else if (Character.isAlphabetic(e.getKeyChar()) ||
-                Character.isJavaLetterOrDigit(e.getKeyChar()) ||
-                e.getKeyCode() == KeyEvent.VK_SPACE) {
-            currentCommand = currentCommand + e.getKeyChar();
-            //Iris.say("Appending command: " + currentCommand);
+
         }
     }
 }
