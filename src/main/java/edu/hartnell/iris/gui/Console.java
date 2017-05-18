@@ -4,7 +4,9 @@ import edu.hartnell.iris.commands.CommandManager;
 import edu.hartnell.iris.listeners.CommandKeys;
 import edu.hartnell.iris.time.TimeManager;
 
+import javax.sound.sampled.Line;
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import java.awt.*;
@@ -147,6 +149,14 @@ public class Console extends JFrame {
         appendText("[" + TimeManager.getStringTimeFormatted() + "] ",
                 Color.RED, null, true, true);
         appendText(Report, NPink, null, true, false);
+    }
+
+    public void clearDocument() {
+        try {
+            InfoPanel.getStyledDocument().remove
+                    (0, InfoPanel.getStyledDocument().getLength());
+            first = true;
+        } catch (BadLocationException e) { e.printStackTrace(); }
     }
 
     private boolean first = true;

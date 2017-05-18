@@ -11,11 +11,9 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-import static java.lang.Thread.interrupted;
 import static java.lang.Thread.sleep;
 
 public class PluginManager extends ClassLoader {
@@ -23,11 +21,9 @@ public class PluginManager extends ClassLoader {
     private LinkedHashSet<Plugin> plugins = new LinkedHashSet<>();
 
     public PluginManager() {
-        Iris.say("Starting Plugin Manager!");
         File rdir;
         try {
             rdir = Iris.getRuntimeLocation();
-            Iris.say("Runtime Parent Directory: " + rdir.getAbsolutePath());
         } catch (URISyntaxException e) { e.printStackTrace(); return; }
 
         File pdir = new File(rdir + "/Plugins");
@@ -45,10 +41,13 @@ public class PluginManager extends ClassLoader {
                     try {
                         Plugin plugin = new Plugin(f);
                         if (plugin.isInitialized())
-                            Iris.say("Initialized  " + f.getName());
+                            Iris.say(f.getName() + " has been loaded!");
                         plugins.add(plugin);
                         plugin.enable();
-                    } catch (Exception e) { e.printStackTrace(); }
+                    } catch (Exception e) {
+                        Iris.report(f.getName() + " could not be read!");
+                        continue;
+                    }
                 }
             }
         }).start();
@@ -61,6 +60,11 @@ public class PluginManager extends ClassLoader {
             }
         }
         return null;
+    }
+
+    public void clear() {
+        plugins.clear();
+        listeners.clear();
     }
 
     public boolean isMainClass(Class C) {

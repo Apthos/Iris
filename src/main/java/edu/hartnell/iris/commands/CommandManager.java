@@ -1,8 +1,9 @@
 package edu.hartnell.iris.commands;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import edu.hartnell.iris.Iris;
-import edu.hartnell.iris.commands.commands.Hello;
-import edu.hartnell.iris.commands.commands.Memory;
+import edu.hartnell.iris.commands.commands.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,26 +11,37 @@ import java.util.List;
 
 public class CommandManager {
 
-    private HashMap<String, Command> Commands;
+    private Table<String, Command, String> Commands;
     private List<String> PrevCommands = new ArrayList<>();
 
     public CommandManager() {
-        Commands = new HashMap<>();
+        Commands = HashBasedTable.create();
         registerCommands();
     }
 
     private void registerCommands() {
-        Commands.put("hello", new Hello());
-        Commands.put("memory", new Memory());
+        registerCommand("hello", new Hello(), "Just a test command");
+        registerCommand("memory", new Memory(), "Check Memory Usage");
+        registerCommand("reload", new Reload(), "Reloads Plugins");
+        registerCommand("help", new Help(), "Shows all commands and description");
+        registerCommand("clear", new Clear(), "Clears Document");
     }
 
-    public void registerCommand(String commandName, Command command){
-        Iris.say("Registering the command: " + commandName);
-        Commands.put(commandName.toLowerCase(), command);
+    public void clear() {
+        Commands.clear();
+        registerCommands();
+    }
+
+    public Table<String, Command, String> getCommands() {
+        return this.Commands;
+    }
+
+    public void registerCommand(String commandName, Command command, String desc) {
+        Commands.put(commandName.toLowerCase(), command, desc);
     }
 
     public void submitInterpretation(String CMD) {
-        if (!Commands.containsKey(CMD.split(" ")[0].toLowerCase())) {
+        if (Commands.row(CMD.split(" ")[0].toLowerCase()).isEmpty()) {
             Iris.report("ERROR: \"" + CMD.split(" ")[0] +
                     "\" isn't a valid command!");
             return;
@@ -43,9 +55,8 @@ public class CommandManager {
             }
             Args.add(S);
         }
-        Commands.get(CMD.split(" ")[0].toLowerCase()).onCommand(CMD.split(" ")[0]
-                .toLowerCase(), Args);
-
+        ((Command) Commands.row(CMD.split(" ")[0].toLowerCase()).keySet().toArray()[0])
+                .onCommand(CMD.split(" ")[0].toLowerCase(), Args);
     }
 
     private String getPiece(String cmd, int piece){

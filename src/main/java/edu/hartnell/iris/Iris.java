@@ -4,9 +4,6 @@ import edu.hartnell.iris.commands.CommandManager;
 import edu.hartnell.iris.communication.socket.SocketManager;
 import edu.hartnell.iris.data.DataManager;
 import edu.hartnell.iris.communication.email.EmailManager;
-import edu.hartnell.iris.event.events.EmailReceive;
-import edu.hartnell.iris.event.iEvent;
-import edu.hartnell.iris.test.ListenerTest;
 import edu.hartnell.iris.gui.Console;
 import edu.hartnell.iris.plugin.PluginManager;
 import edu.hartnell.iris.communication.text.TextManager;
@@ -15,17 +12,9 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 
-import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.ScrollBarUI;
-import java.awt.*;
 import java.io.File;
-import java.lang.reflect.Parameter;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Iris {
 
@@ -38,14 +27,11 @@ public class Iris {
     private static SocketManager socketManager = null;
 
     public static void main(String... args) {
+        console = new Console();
         setup();
-
-        getPluginManager().registerListener(new ListenerTest());
-        getPluginManager().invoke(iEvent.Events.EmailReceive, new EmailReceive());
     }
 
     private static void setup() {
-        console = new Console();
         Settings conf = collectCredentials();
         commandManager = new CommandManager();
         console.initializeEvents(console, commandManager);
@@ -94,6 +80,14 @@ public class Iris {
         }
 
         pluginManager = new PluginManager(); //has to be last
+    }
+
+    public static void reload() {
+        commandManager.clear();
+        pluginManager.clear();
+        socketManager.kill();
+        setup();
+        System.gc();
     }
 
     public static void say(String Message) {

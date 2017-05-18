@@ -1,0 +1,18 @@
+<iris>
+    <settings>
+        <socket enabled="true">
+            <port>9090</port>
+            <timeout>5</timeout>
+            <concurrent>5</concurrent>
+            <users>
+                <Admin alive="True">
+                    <name>Admin</name>
+                    <password>toor</password>
+                    <permissions>
+                        Push_Command
+                    </permissions>
+                </Admin>
+            </users>
+        </socket>
+    </settings>
+</iris>
